@@ -6,14 +6,14 @@ from bs4 import BeautifulSoup
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font
 
-COURSERA_XML = 'https://www.coursera.org/sitemap~www~courses.xml'
+URL_XML = 'https://www.URL.org/sitemap~www~courses.xml'
 QUANTITY = random.randrange(15, 30)
 COLUMN_TITLE = [
                 'Name', 'Language', 'Week(s)', 'Starting date', 'Rating'
                     ]
 
 
-def parse_xml_content(xml_url: str) -> list:
+def parse_xlm(xml_url):
     raw_xml = requests.get(xml_url).content
     parser_xml = etree.XMLParser(remove_blank_text=True)
     try:
@@ -28,12 +28,12 @@ def parse_xml_content(xml_url: str) -> list:
         return elements_content
 
 
-def get_random_courses(courses_stack: list, quantity: int) -> tuple:
+def get_random_courses(courses_stack, quantity):
     course_choices = random.sample(courses_stack, quantity)
     return course_choices
 
 
-def fetch_course_info(course_link):
+def fetch_course_data(course_link):
     name = {
             'tag': 'h1',
             'attr': {'class': 'title display-3-text'}
@@ -138,17 +138,17 @@ def save_xlx(data, column_title):
 
 
 if __name__ == '__main__':
-    courses = parse_xml_content(COURSERA_XML)
+    courses = parse_xlm(URL_XML)
     courses_data = []
     for course in get_random_courses(courses, QUANTITY):
         print('Collecting course information from -', course)
-        courses_data.append(fetch_course_info(course))
+        courses_data.append(fetch_course_data(course))
     """
     Of course list comprhenesion is better and faster, but I lost output
     in console statement information about current process.
     """
     # courses_info = [
-    #         fetch_course_info(course) for course in
+    #         fetch_course_data(course) for course in
     #         get_random_courses(courses, QUANTITY)
     #                     ]
     save_xlx(courses_data, COLUMN_TITLE)
