@@ -6,8 +6,6 @@ from bs4 import BeautifulSoup
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font
 
-
-LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 COURSERA_XML = 'https://www.coursera.org/sitemap~www~courses.xml'
 QUANTITY = random.randrange(15, 30)
 COLUMN_TITLE = [
@@ -91,58 +89,60 @@ def fetch_course_info(course_link):
            course_date, course_rating)
 
 
-def create_xlsx(courses_data: tuple, column_title: list):
-
-    workbook = Workbook()
+def fill_title_column(workbook, column_title):
     sheet = workbook.active
     sheet.append(column_title)
+    return workbook
+
+
+def fill_data(workbook, courses_data):
+    sheet = workbook.active
     for row in courses_data:
         sheet.append(row)
     return workbook
 
 
-def style_pyxl_object(raw_workbook):
+def style_workbook(workbook):
+    letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+    amount_columns = 0
+    width_a_cell, width_other_cell = 30, 15
 
-    length_column_a = 30
-    length_column_other = 15
-
-    al = Alignment(horizontal='center',
-                   vertical='center',
-                   wrap_text=True)
-
-    workbook = raw_workbook
+    alignment = Alignment(horizontal='center',
+                          vertical='center',
+                          wrap_text=True)
     sheet = workbook.active
 
-    # alignment for every cell
     for column in sheet.columns:
         for cell in column:
-            cell.alignment = al
+            cell.alignment = alignment
 
-    """
-    Add bold font for every column title cell and calculate amount of used
-    column (needs for stetting custom column width, see bellow)
-    """
-    amount_columns = 0
     for cell in sheet.rows[0]:
         if cell is not None:
             cell.font = Font(bold=True)
             amount_columns += 1
 
-    # Add custom column width
-    for letter in LETTERS[:amount_columns]:
+    for letter in letters[:amount_columns]:
         if letter == 'A':
-            sheet.column_dimensions[letter].width = length_column_a
+            sheet.column_dimensions[letter].width = width_a_cell
         else:
-            sheet.column_dimensions[letter].width = length_column_other
+            sheet.column_dimensions[letter].width = width_other_cell
     return workbook
+
+
+def save_xlx(data, column_title):
+    workbook = Workbook()
+    fill_title_column(workbook, column_title)
+    fill_data(workbook, data)
+    style_workbook(workbook)
+    workbook.save('test.xlsx')
 
 
 if __name__ == '__main__':
     courses = parse_xml_content(COURSERA_XML)
-    courses_info = []
+    courses_data = []
     for course in get_random_courses(courses, QUANTITY):
         print('Collecting course information from -', course)
-        courses_info.append(fetch_course_info(course))
+        courses_data.append(fetch_course_info(course))
     """
     Of course list comprhenesion is better and faster, with it I lost output
     in console statement information about current process.
@@ -151,6 +151,4 @@ if __name__ == '__main__':
     #         fetch_course_info(course) for course in
     #         get_random_courses(courses, QUANTITY)
     #                     ]
-    raw_pyxl = create_xlsx(courses_info, COLUMN_TITLE)
-    pyxl_object = style_pyxl_object(raw_pyxl)
-    pyxl_object.save('test.xlsx')
+    save_xlx(courses_data, COLUMN_TITLE)
