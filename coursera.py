@@ -144,7 +144,7 @@ if __name__ == '__main__':
         print('Collecting course information from -', course)
         courses_data.append(fetch_course_info(course))
     """
-    Of course list comprhenesion is better and faster, with it I lost output
+    Of course list comprhenesion is better and faster, but I lost output
     in console statement information about current process.
     """
     # courses_info = [
