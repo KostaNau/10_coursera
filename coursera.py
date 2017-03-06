@@ -103,9 +103,9 @@ def fill_data(workbook, courses_data):
 
 
 def style_workbook(workbook):
-    letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-    amount_columns = 0
-    width_a_cell, width_other_cell = 30, 15
+    # letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+    # amount_columns = 0
+    # width_a_cell, width_other_cell = 30, 15
 
     alignment = Alignment(horizontal='center',
                           vertical='center',
@@ -119,13 +119,13 @@ def style_workbook(workbook):
     for cell in sheet.rows[0]:
         if cell is not None:
             cell.font = Font(bold=True)
-            amount_columns += 1
+            # amount_columns += 1
 
-    for letter in letters[:amount_columns]:
-        if letter == 'A':
-            sheet.column_dimensions[letter].width = width_a_cell
-        else:
-            sheet.column_dimensions[letter].width = width_other_cell
+    # for letter in letters[:amount_columns]:
+    #     if letter == 'A':
+    #         sheet.column_dimensions[letter].width = width_a_cell
+    #     else:
+    #         sheet.column_dimensions[letter].width = width_other_cell
     return workbook
 
 
