@@ -6,10 +6,10 @@ from bs4 import BeautifulSoup
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font
 
-URL_XML = 'https://www.URL.org/sitemap~www~courses.xml'
+URL_XML = 'https://www.coursera.org/sitemap~www~courses.xml'
 QUANTITY = random.randrange(15, 30)
 COLUMN_TITLE = [
-                'Name', 'Language', 'Week(s)', 'Starting date', 'Rating'
+                'title', 'Language', 'Week(s)', 'Starting date', 'Rating'
                     ]
 
 
@@ -34,7 +34,7 @@ def get_random_courses(courses_stack, quantity):
 
 
 def fetch_course_data(course_link):
-    name = {
+    title = {
             'tag': 'h1',
             'attr': {'class': 'title display-3-text'}
             }
@@ -59,7 +59,7 @@ def fetch_course_data(course_link):
 
     course_data = requests.get(course_link).content
     soup = BeautifulSoup(course_data, 'html.parser')
-    course_name = soup.find(name['tag'], name['attr']).text
+    course_title = soup.find(title['tag'], title['attr']).text
     course_language = soup.find(language['tag'], language['attr']).text
     course_date = soup.find(date['tag'], date['attr']).text
 
@@ -85,7 +85,7 @@ def fetch_course_data(course_link):
     else:
         course_rating = 'N/a'
 
-    return(course_name, course_language, course_weeks,
+    return(course_title, course_language, course_weeks,
            course_date, course_rating)
 
 
@@ -103,9 +103,6 @@ def fill_data(workbook, courses_data):
 
 
 def style_workbook(workbook):
-    # letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-    # amount_columns = 0
-    # width_a_cell, width_other_cell = 30, 15
 
     alignment = Alignment(horizontal='center',
                           vertical='center',
@@ -120,12 +117,24 @@ def style_workbook(workbook):
         if cell is not None:
             cell.font = Font(bold=True)
             # amount_columns += 1
+    return workbook
 
-    # for letter in letters[:amount_columns]:
-    #     if letter == 'A':
-    #         sheet.column_dimensions[letter].width = width_a_cell
-    #     else:
-    #         sheet.column_dimensions[letter].width = width_other_cell
+
+def set_column_width(workbook):
+    letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+    amount_columns = 0
+    width_a_cell, width_other_cell = 30, 15
+    sheet = workbook.active
+
+    for cell in sheet.rows[0]:
+        if cell is not None:
+            amount_columns += 1
+
+    for letter in letters[:amount_columns]:
+        if letter == 'A':
+            sheet.column_dimensions[letter].width = width_a_cell
+        else:
+            sheet.column_dimensions[letter].width = width_other_cell
     return workbook
 
 
@@ -134,6 +143,7 @@ def save_xlx(data, column_title):
     fill_title_column(workbook, column_title)
     fill_data(workbook, data)
     style_workbook(workbook)
+    set_column_width(workbook)
     workbook.save('test.xlsx')
 
 
