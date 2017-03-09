@@ -1,4 +1,5 @@
 import random
+import string
 
 import requests
 from lxml import etree
@@ -13,27 +14,31 @@ COLUMN_TITLE = [
                     ]
 
 
-def parse_xlm(xml_url):
-    raw_xml = requests.get(xml_url).content
+def get_http_response(url):
+    return requests.get(url).content
+
+
+def parse_xlm(source_url):
+    raw_xml = get_http_response(source_url)
     parser_xml = etree.XMLParser(remove_blank_text=True)
     try:
         root_xml = etree.fromstring(raw_xml, parser_xml)
-        elements_content = [
+        courses_urls = [
                         element.text for element in root_xml.iter()
                         if element.text is not None
                         ]
     except (etree.XMLSyntaxError) as ex:
         print('Error:', ex)
     else:
-        return elements_content
+        return courses_urls
 
 
-def get_random_courses(courses_stack, quantity):
-    course_choices = random.sample(courses_stack, quantity)
+def get_random_courses(courses_urls, quantity):
+    course_choices = random.sample(courses_urls, quantity)
     return course_choices
 
 
-def fetch_course_data(course_link):
+def fetch_course_data(course_url):
     title = {
             'tag': 'h1',
             'attr': {'class': 'title display-3-text'}
@@ -57,7 +62,7 @@ def fetch_course_data(course_link):
             'attr': {'class': 'ratings-text bt3-visible-xs'}
             }
 
-    course_data = requests.get(course_link).content
+    course_data = get_http_response(course_url)
     soup = BeautifulSoup(course_data, 'html.parser')
     course_title = soup.find(title['tag'], title['attr']).text
     course_language = soup.find(language['tag'], language['attr']).text
@@ -73,20 +78,22 @@ def fetch_course_data(course_link):
     elif 'Week' in alt_weeks.text:
         course_weeks = alt_weeks.text
     else:
-        course_weeks = 'N/a'
-        """
-        Attention for the mentor: In my opinion str is much better than None
-        for view in Excel. All the same we do it for GUI, instead console
-        output and perhaps for not experienced user.
-        """
+        course_weeks = None
 
     if rating:
         course_rating = rating.text
     else:
-        course_rating = 'N/a'
+        course_rating = None
 
-    return(course_title, course_language, course_weeks,
-           course_date, course_rating)
+    return[course_title, course_language, course_weeks,
+           course_date, course_rating]
+
+
+def replace_none(course_data):
+    for i in range(len(course_data)):
+        if course_data[i] is None:
+            course_data[i] = 'N/a'
+    return course_data
 
 
 def fill_title_column(workbook, column_title):
@@ -116,12 +123,11 @@ def style_workbook(workbook):
     for cell in sheet.rows[0]:
         if cell is not None:
             cell.font = Font(bold=True)
-            # amount_columns += 1
     return workbook
 
 
 def set_column_width(workbook):
-    letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+    letters = string.ascii_letters
     amount_columns = 0
     width_a_cell, width_other_cell = 30, 15
     sheet = workbook.active
@@ -148,17 +154,10 @@ def save_xlx(data, column_title):
 
 
 if __name__ == '__main__':
-    courses = parse_xlm(URL_XML)
+    courses_urls = parse_xlm(URL_XML)
     courses_data = []
-    for course in get_random_courses(courses, QUANTITY):
-        print('Collecting course information from -', course)
-        courses_data.append(fetch_course_data(course))
-    """
-    Of course list comprhenesion is better and faster, but I lost output
-    in console statement information about current process.
-    """
-    # courses_info = [
-    #         fetch_course_data(course) for course in
-    #         get_random_courses(courses, QUANTITY)
-    #                     ]
+    for course_url in get_random_courses(courses_urls, QUANTITY):
+        print('Collecting course information from -', course_url)
+        course_information = fetch_course_data(course_url)
+        courses_data.append(replace_none(course_information))
     save_xlx(courses_data, COLUMN_TITLE)
